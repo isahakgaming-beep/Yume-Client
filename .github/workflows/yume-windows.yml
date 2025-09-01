@@ -37,7 +37,7 @@ jobs:
           target: 'desktop'
           arch: 'win64_msvc2019_64'
           modules: 'qt5compat qtnetworkauth'
-          cache: true          # réutilise le Qt déjà téléchargé
+          cache: true
 
       - name: Setup vcpkg (zlib)
         uses: lukka/run-vcpkg@v11
@@ -55,27 +55,40 @@ jobs:
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      # ⬇️ Ne compile que l'exécutable du launcher
+      # Compile uniquement l'exécutable du launcher
       - name: Build (launcher only)
         shell: cmd
         run: cmake --build build --config Release --target prismlauncher -j 4
 
-      # Préparer un dossier "dist\Yume" avec l'exe + DLL Qt (windeployqt)
+      # Bundle: trouver windeployqt.exe de manière sûre puis packager les DLL Qt
       - name: Bundle with windeployqt
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+
+          # 1) trouver l'exe du launcher sorti du build
           $exe = Join-Path "build" "prismlauncher.exe"
           if (!(Test-Path $exe)) { $exe = Join-Path "build\launcher" "prismlauncher.exe" }
           if (!(Test-Path $exe)) { throw "Impossible de trouver l'exécutable (prismlauncher.exe)." }
 
+          # 2) destination
           New-Item -ItemType Directory -Path "dist\Yume" -Force | Out-Null
           Copy-Item $exe "dist\Yume\YumeLauncher.exe" -Force
 
-          $qtBin = Resolve-Path "$env:Qt6_DIR\..\..\bin\windeployqt.exe"
+          # 3) localiser windeployqt.exe à partir de Qt6_DIR (robuste)
+          $qtRoot = Split-Path -Parent (Split-Path -Parent $env:Qt6_DIR)  # ...\6.6.3\msvc2019_64
+          $guess = Join-Path $qtRoot "bin\windeployqt.exe"
+          if (Test-Path $guess) {
+            $qtBin = $guess
+          } else {
+            $qtBin = (Get-ChildItem -Path $qtRoot -Recurse -Filter windeployqt.exe -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+          }
+          if (-not $qtBin) { throw "windeployqt introuvable (Qt6_DIR=$env:Qt6_DIR)" }
+
+          Write-Host "Using windeployqt at: $qtBin"
           & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
 
-      # Zipper avec tar (évite bug Compress-Archive)
+      # Zipper avec tar (évite le bug de Compress-Archive)
       - name: Package zip
         shell: cmd
         run: tar -a -c -f yume-windows.zip -C dist Yume
