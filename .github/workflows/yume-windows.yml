@@ -1,0 +1,60 @@
+name: yume-windows
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - '**.cpp'
+      - '**.h'
+      - 'CMakeLists.txt'
+      - 'program_info/**'
+      - 'launcher/resources/**'
+      - '.github/workflows/yume-windows.yml'
+      - 'README.md'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Enable MSVC env
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Ninja
+        run: choco install ninja --no-progress -y
+
+      - name: Install Qt 6
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.6.*'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          modules: 'qtbase qttools qtnetworkauth'
+
+      - name: Configure (CMake + Ninja)
+        shell: cmd
+        run: >
+          cmake -S . -B build -G "Ninja"
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
+
+      - name: Build
+        shell: cmd
+        run: cmake --build build --config Release -j 2
+
+      - name: Package zip
+        shell: pwsh
+        run: Compress-Archive -Path build\* -DestinationPath yume-windows.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yume-windows
+          path: yume-windows.zip
