@@ -23,3 +23,4 @@ Le but : fournir des presets simples pour PvP (faible latence, HUD propre, perfs
 > Astuce : évite les modifications qui pourraient être considérées comme “cheat” par les serveurs.
 
 <!-- build: yume -->
+<!-- build: yume retry -->
