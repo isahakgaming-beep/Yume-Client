@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
   <id>@Launcher_AppID@</id>
-  <name>Prism Launcher</name>
-  <summary>Custom Minecraft Launcher to easily manage multiple Minecraft installations at once</summary>
+  <name>Yume Launcher</name>
+  <summary>Lanceur Minecraft axé PvP et performances</summary>
   <developer id="org.prismlauncher">
     <name>Prism Launcher Contributors</name>
   </developer>
