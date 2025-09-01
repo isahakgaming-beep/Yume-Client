@@ -40,18 +40,21 @@ jobs:
           modules: 'qt5compat qtnetworkauth'
           cache: true
 
-      # Prépare vcpkg (mais n'installe rien tout seul sans vcpkg.json)
+      # Prépare vcpkg (sans manifest) pour utiliser "install --triplet"
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgTriplet: x64-windows
           runVcpkgInstall: false
 
-      # ⬇️ Installer zlib dynamiquement (assure la présence de zlib1.dll)
-      - name: vcpkg install zlib (dynamic)
+      # >>> Installe zlib en mode classique (IMPORTANT)
+      - name: vcpkg install zlib (classic)
         shell: pwsh
         run: |
-          & "$env:VCPKG_ROOT\vcpkg.exe" install "zlib:x64-windows"
+          $ErrorActionPreference = "Stop"
+          & "$env:VCPKG_ROOT\vcpkg.exe" version
+          & "$env:VCPKG_ROOT\vcpkg.exe" install zlib --triplet x64-windows --clean-after-build
+          if ($LASTEXITCODE -ne 0) { throw "vcpkg install zlib failed with exit code $LASTEXITCODE" }
 
       - name: Configure (CMake + Ninja)
         shell: cmd
@@ -62,7 +65,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      # Build uniquement l'appli (nom de target varie selon config)
+      # Build uniquement l'appli (nom de target selon config)
       - name: Build (launcher only)
         shell: cmd
         run: cmake --build build --config Release --target PrismLauncher -j 6 || cmake --build build --config Release --target prismlauncher -j 6
@@ -94,7 +97,7 @@ jobs:
           Write-Host "Using windeployqt at: $qtBin"
           & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
 
-      # ⬇️ Copier zlib1.dll : chemin standard + fallback (recherche récursive)
+      # Copie zlib1.dll depuis vcpkg (chemin standard + fallback récursif)
       - name: Copy vcpkg runtime DLLs (zlib)
         shell: pwsh
         run: |
@@ -119,7 +122,7 @@ jobs:
             }
           }
 
-          if (-not $copied) { throw "zlib1.dll introuvable sous %VCPKG_ROOT%. vcpkg n'a probablement pas installé zlib." }
+          if (-not $copied) { throw "zlib1.dll introuvable sous %VCPKG_ROOT%. (vcpkg zlib n'a pas produit de DLL ?)" }
 
       - name: Package zip
         shell: cmd
