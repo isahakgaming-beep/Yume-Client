@@ -1,0 +1,7 @@
+Ce rebranding ("Yume") est destiné à être appliqué sur un launcher open-source existant.
+Respecte la licence et conserve les mentions de copyright et de licence du projet d'origine.
+
+Exemple (si tu pars de Prism Launcher) :
+- Code : GPL-3.0-only (à conserver)
+- Les logos/ressources d’origine de Prism ne doivent pas être réutilisés tels quels.
+- Remplace toute marque/naming/asset par les fichiers "Yume" fournis ici ou tes propres créations.
