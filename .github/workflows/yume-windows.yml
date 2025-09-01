@@ -57,9 +57,25 @@ jobs:
         shell: cmd
         run: cmake --build build --config Release -j 2
 
-      - name: Package zip
+      # Préparer un dossier "dist\Yume" avec l'exe + DLL Qt (windeployqt)
+      - name: Bundle with windeployqt
         shell: pwsh
-        run: Compress-Archive -Path build\* -DestinationPath yume-windows.zip
+        run: |
+          $ErrorActionPreference = "Stop"
+          $exe = Join-Path "build" "prismlauncher.exe"
+          if (!(Test-Path $exe)) { $exe = Join-Path "build\launcher" "prismlauncher.exe" }
+          if (!(Test-Path $exe)) { throw "Impossible de trouver l'exécutable (prismlauncher.exe)." }
+
+          New-Item -ItemType Directory -Path "dist\Yume" -Force | Out-Null
+          Copy-Item $exe "dist\Yume\YumeLauncher.exe" -Force
+
+          $qtBin = Resolve-Path "$env:Qt6_DIR\..\..\bin\windeployqt.exe"
+          & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
+
+      # Zipper avec tar (évite le bug 'Compress-Archive: Stream was too long')
+      - name: Package zip
+        shell: cmd
+        run: tar -a -c -f yume-windows.zip -C dist Yume
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
