@@ -43,7 +43,7 @@ jobs:
       - name: Setup vcpkg (zlib)
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgTriplet: x64-windows
+          vcpkgTriplet: x64-windows         # binaire dynamique -> zlib1.dll
           vcpkgJsonGlob: 'vcpkg.json'
           runVcpkgInstall: true
 
@@ -56,12 +56,10 @@ jobs:
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      # Build uniquement l'appli (fallback sur nom de target, en UNE SEULE LIGNE)
       - name: Build (launcher only)
         shell: cmd
         run: cmake --build build --config Release --target PrismLauncher -j 6 || cmake --build build --config Release --target prismlauncher -j 6
 
-      # Bundle: windeployqt + détection robuste de l'exe
       - name: Bundle with windeployqt
         shell: pwsh
         run: |
@@ -88,6 +86,24 @@ jobs:
 
           Write-Host "Using windeployqt at: $qtBin"
           & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
+
+      # ⬇️ NOUVELLE ÉTAPE : copier les DLL vcpkg (zlib1.dll) à côté de l'exe
+      - name: Copy vcpkg runtime DLLs (zlib)
+        shell: pwsh
+        run: |
+          $triplet = "x64-windows"
+          $binDir = Join-Path $env:VCPKG_ROOT "installed\$triplet\bin"
+          if (!(Test-Path $binDir)) { throw "vcpkg runtime introuvable: $binDir" }
+          $dlls = @("zlib1.dll")
+          foreach ($d in $dlls) {
+            $src = Join-Path $binDir $d
+            if (Test-Path $src) {
+              Copy-Item $src "dist\Yume\" -Force
+              Write-Host "Copié: $src"
+            } else {
+              Write-Host "Attention: $d non trouvé dans $binDir"
+            }
+          }
 
       - name: Package zip
         shell: cmd
