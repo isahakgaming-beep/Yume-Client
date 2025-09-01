@@ -38,12 +38,20 @@ jobs:
           arch: 'win64_msvc2019_64'
           modules: 'qt5compat qtnetworkauth'
 
+      - name: Setup vcpkg (zlib)
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgTriplet: x64-windows
+          vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
+
       - name: Configure (CMake + Ninja)
         shell: cmd
         run: >
           cmake -S . -B build -G "Ninja"
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
+          -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
       - name: Build
         shell: cmd
