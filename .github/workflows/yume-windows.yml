@@ -36,6 +36,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
+          modules: 'qtbase qttools qt5compat'   # Core5Compat pour CMake
 
       - name: Configure (CMake + Ninja)
         shell: cmd
