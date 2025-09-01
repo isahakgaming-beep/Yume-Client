@@ -40,21 +40,12 @@ jobs:
           modules: 'qt5compat qtnetworkauth'
           cache: true
 
-      # Prépare vcpkg (sans manifest) pour utiliser "install --triplet"
+      # Prépare vcpkg (pour que CMake en mode manifeste l’utilise automatiquement)
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgTriplet: x64-windows
-          runVcpkgInstall: false
-
-      # >>> Installe zlib en mode classique (IMPORTANT)
-      - name: vcpkg install zlib (classic)
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          & "$env:VCPKG_ROOT\vcpkg.exe" version
-          & "$env:VCPKG_ROOT\vcpkg.exe" install zlib --triplet x64-windows --clean-after-build
-          if ($LASTEXITCODE -ne 0) { throw "vcpkg install zlib failed with exit code $LASTEXITCODE" }
+          runVcpkgInstall: false   # on laisse CMake/manifeste gérer
 
       - name: Configure (CMake + Ninja)
         shell: cmd
@@ -97,32 +88,37 @@ jobs:
           Write-Host "Using windeployqt at: $qtBin"
           & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
 
-      # Copie zlib1.dll depuis vcpkg (chemin standard + fallback récursif)
+      # 🔎 Chercher zlib1.dll partout dans le workspace (y compris build\vcpkg_installed\...)
       - name: Copy vcpkg runtime DLLs (zlib)
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $triplet = "x64-windows"
-          $binDir  = Join-Path $env:VCPKG_ROOT "installed\$triplet\bin"
           $target  = "dist\Yume\"
           New-Item -ItemType Directory -Path $target -Force | Out-Null
 
-          $copied = $false
-          $candidate = Join-Path $binDir "zlib1.dll"
-          if (Test-Path $candidate) {
-            Copy-Item $candidate $target -Force
-            Write-Host "Copié: $candidate"
-            $copied = $true
-          } else {
-            $found = Get-ChildItem -Path $env:VCPKG_ROOT -Recurse -Filter "zlib1.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) {
-              Copy-Item $found.FullName $target -Force
-              Write-Host "Copié (fallback): $($found.FullName)"
-              $copied = $true
-            }
+          $searchRoots = @("$env:GITHUB_WORKSPACE", "$env:VCPKG_ROOT")
+          $found = $null
+          foreach ($root in $searchRoots) {
+            if (-not (Test-Path $root)) { continue }
+            $hit = Get-ChildItem -Path $root -Recurse -Filter "zlib1.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($hit) { $found = $hit.FullName; break }
           }
 
-          if (-not $copied) { throw "zlib1.dll introuvable sous %VCPKG_ROOT%. (vcpkg zlib n'a pas produit de DLL ?)" }
+          if ($found) {
+            Copy-Item $found $target -Force
+            Write-Host "Copié: $found"
+          } else {
+            Write-Host "zlib1.dll introuvable, on tente de copier tout un dossier 'bin' de vcpkg_installed (fallback)…"
+            $binGuess = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Directory -ErrorAction SilentlyContinue |
+                        Where-Object { $_.Name -eq "bin" -and $_.FullName -like "*vcpkg_installed*x64-windows*" } |
+                        Select-Object -First 1
+            if ($binGuess) {
+              Copy-Item "$($binGuess.FullName)\*.dll" $target -Force
+              Write-Host "DLL copiées depuis: $($binGuess.FullName)"
+            } else {
+              throw "Impossible de trouver zlib1.dll (ni bin vcpkg_installed)."
+            }
+          }
 
       - name: Package zip
         shell: cmd
