@@ -1,10 +1,5 @@
 {
-  "dependencies": [
-    "bzip2",
-    "cmark",
-    { "name": "ecm", "host": true },
-    { "name": "pkgconf", "host": true },
-    "tomlplusplus",
-    "zlib"
-  ]
+  "name": "yume-launcher-deps",
+  "version-string": "0.1.0",
+  "dependencies": ["zlib"]
 }
