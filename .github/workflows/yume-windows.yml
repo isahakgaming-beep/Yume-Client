@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          fetch-depth: 1
 
       - name: Enable MSVC env
         uses: ilammy/msvc-dev-cmd@v1
@@ -55,46 +56,35 @@ jobs:
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      # Compile uniquement l'exécutable du launcher
+      # Build uniquement l'appli (nom de target sensible à la casse)
       - name: Build (launcher only)
         shell: cmd
-        run: cmake --build build --config Release --target prismlauncher -j 4
+        run: |
+          cmake --build build --config Release --target PrismLauncher -j 6 ^
+          || cmake --build build --config Release --target prismlauncher -j 6
 
-      # Bundle: trouver windeployqt.exe de manière sûre puis packager les DLL Qt
+      # Bundle: windeployqt + détection robuste de l'exe (majuscules/minuscules)
       - name: Bundle with windeployqt
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          $candidates = @(
+            "build\PrismLauncher.exe",
+            "build\prismlauncher.exe",
+            "build\launcher\PrismLauncher.exe",
+            "build\launcher\prismlauncher.exe"
+          )
+          $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $exe) { throw "Impossible de trouver l'exécutable (PrismLauncher/prismlauncher)." }
 
-          # 1) trouver l'exe du launcher sorti du build
-          $exe = Join-Path "build" "prismlauncher.exe"
-          if (!(Test-Path $exe)) { $exe = Join-Path "build\launcher" "prismlauncher.exe" }
-          if (!(Test-Path $exe)) { throw "Impossible de trouver l'exécutable (prismlauncher.exe)." }
-
-          # 2) destination
           New-Item -ItemType Directory -Path "dist\Yume" -Force | Out-Null
           Copy-Item $exe "dist\Yume\YumeLauncher.exe" -Force
 
-          # 3) localiser windeployqt.exe à partir de Qt6_DIR (robuste)
-          $qtRoot = Split-Path -Parent (Split-Path -Parent $env:Qt6_DIR)  # ...\6.6.3\msvc2019_64
+          $qtRoot = Split-Path -Parent (Split-Path -Parent $env:Qt6_DIR)
           $guess = Join-Path $qtRoot "bin\windeployqt.exe"
-          if (Test-Path $guess) {
-            $qtBin = $guess
-          } else {
+          if (Test-Path $guess) { $qtBin = $guess }
+          else {
             $qtBin = (Get-ChildItem -Path $qtRoot -Recurse -Filter windeployqt.exe -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
           }
-          if (-not $qtBin) { throw "windeployqt introuvable (Qt6_DIR=$env:Qt6_DIR)" }
-
-          Write-Host "Using windeployqt at: $qtBin"
-          & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
-
-      # Zipper avec tar (évite le bug de Compress-Archive)
-      - name: Package zip
-        shell: cmd
-        run: tar -a -c -f yume-windows.zip -C dist Yume
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: yume-windows
-          path: yume-windows.zip
+     
+::contentReference[oaicite:0]{index=0}
