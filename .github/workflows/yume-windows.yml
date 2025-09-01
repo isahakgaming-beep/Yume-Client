@@ -37,6 +37,7 @@ jobs:
           target: 'desktop'
           arch: 'win64_msvc2019_64'
           modules: 'qt5compat qtnetworkauth'
+          cache: true          # réutilise le Qt déjà téléchargé
 
       - name: Setup vcpkg (zlib)
         uses: lukka/run-vcpkg@v11
@@ -50,12 +51,14 @@ jobs:
         run: >
           cmake -S . -B build -G "Ninja"
           -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_TESTING=OFF
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      - name: Build
+      # ⬇️ Ne compile que l'exécutable du launcher
+      - name: Build (launcher only)
         shell: cmd
-        run: cmake --build build --config Release -j 2
+        run: cmake --build build --config Release --target prismlauncher -j 4
 
       # Préparer un dossier "dist\Yume" avec l'exe + DLL Qt (windeployqt)
       - name: Bundle with windeployqt
@@ -72,7 +75,7 @@ jobs:
           $qtBin = Resolve-Path "$env:Qt6_DIR\..\..\bin\windeployqt.exe"
           & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
 
-      # Zipper avec tar (évite le bug 'Compress-Archive: Stream was too long')
+      # Zipper avec tar (évite bug Compress-Archive)
       - name: Package zip
         shell: cmd
         run: tar -a -c -f yume-windows.zip -C dist Yume
