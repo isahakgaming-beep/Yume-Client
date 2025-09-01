@@ -16,6 +16,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-linux
 
     steps:
       - name: Checkout
@@ -28,16 +30,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build pkg-config qt6-base-dev qt6-tools-dev qt6-tools-dev-tools
 
-      - name: Setup vcpkg
-        uses: microsoft/vcpkg-action@v1
+      # Bonne action vcpkg
+      - name: Restore and run vcpkg
+        uses: lukka/run-vcpkg@v11
         with:
-          triplet: x64-linux
+          runVcpkgInstall: true
 
       - name: Configure (CMake + Ninja)
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake
+            -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build
         run: cmake --build build --config Release -j 2
