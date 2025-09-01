@@ -29,7 +29,7 @@ jobs:
             qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-tools-dev-tools \
             libqt6core5compat6-dev qt6-networkauth-dev extra-cmake-modules \
             zlib1g-dev libgl1-mesa-dev openjdk-17-jdk \
-            libxkbcommon-dev vulkan-headers libvulkan-dev
+            libxkbcommon-dev libvulkan-dev
 
       - name: Configure (CMake + Ninja)
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
