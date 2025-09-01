@@ -56,14 +56,12 @@ jobs:
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      # Build uniquement l'appli (nom de target sensible à la casse)
+      # Build uniquement l'appli (fallback sur nom de target, en UNE SEULE LIGNE)
       - name: Build (launcher only)
         shell: cmd
-        run: |
-          cmake --build build --config Release --target PrismLauncher -j 6 ^
-          || cmake --build build --config Release --target prismlauncher -j 6
+        run: cmake --build build --config Release --target PrismLauncher -j 6 || cmake --build build --config Release --target prismlauncher -j 6
 
-      # Bundle: windeployqt + détection robuste de l'exe (majuscules/minuscules)
+      # Bundle: windeployqt + détection robuste de l'exe
       - name: Bundle with windeployqt
         shell: pwsh
         run: |
