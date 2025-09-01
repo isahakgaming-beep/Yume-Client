@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
-Name=@Launcher_DisplayName@
-Comment=Discover, manage, and play Minecraft instances
+Name=Yume Launcher
+Comment=Lanceur Minecraft axé PvP et performances
 Type=Application
 Terminal=false
 Exec=@Launcher_APP_BINARY_NAME@ %U
