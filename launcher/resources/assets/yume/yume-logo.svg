@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="45%" r="75%">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="60%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="128" fill="url(#g)"/>
+  <g fill="#fff">
+    <path d="M256 672c0-176 144-320 320-320h64v-96h-64c-229 0-416 187-416 416v48h96v-48z" opacity="0.85"/>
+    <text x="512" y="640" font-size="360" text-anchor="middle" font-family="DejaVu Sans, Arial, Helvetica">Y</text>
+  </g>
+  <text x="512" y="910" font-size="120" text-anchor="middle" fill="#e5e7eb" font-family="DejaVu Sans, Arial, Helvetica">Yume</text>
+</svg>
