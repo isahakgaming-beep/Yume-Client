@@ -3,9 +3,6 @@
 QWidget { background:#0b0c12; color:#e8e9f3; }
 QToolTip { background:#15182a; color:#e8e9f3; border:1px solid #2a2f4a; }
 
-/* Couleur d’accent */
-:root { /* doc */ }
-
 /* Boutons */
 QPushButton {
   background:#15182a; color:#e8e9f3; border:1px solid #2a2f4a; border-radius:10px; padding:8px 14px;
@@ -24,7 +21,7 @@ QLabel#badge, .badge {
   background:#facc15; color:#0b0c12; border-radius:6px; padding:2px 8px; font-weight:600;
 }
 
-/* Entrées */
+/* Champs */
 QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox {
   background:#101322; color:#e8e9f3; border:1px solid #2a2f4a; border-radius:10px; padding:7px 10px;
 }
