@@ -1,6 +1,7 @@
-<RCC>
+<RCC version="1.0">
   <qresource prefix="/yume">
-    <file>style.qss</file>
-    <file>icons/yume.svg</file>
+    <file>icons/yume_logo_256.png</file>
+    <file>icons/yume_logo.svg</file>
+    <file>style/yume.qss</file>
   </qresource>
 </RCC>
