@@ -40,6 +40,7 @@
 #include <QGuiApplication>
 #include <QFile>
 #include <QIcon>
+#include <QDir>
 
 // #define BREAK_INFINITE_LOOP
 // #define BREAK_EXCEPTION
@@ -49,6 +50,42 @@
 #include <chrono>
 #include <thread>
 #endif
+
+static void applyYumeBranding(QApplication& app)
+{
+    // Identité
+    QCoreApplication::setOrganizationName("Yume");
+    QCoreApplication::setOrganizationDomain("yume.gg");
+    QCoreApplication::setApplicationName("Yume Launcher");
+    QApplication::setApplicationDisplayName("Yume Launcher");
+
+    // 1) Icône (ressource -> fallback disque)
+    QIcon appIcon(":/yume/icons/yume.svg");
+    if (appIcon.isNull()) {
+        const QString diskIcon = QCoreApplication::applicationDirPath() + "/yume/icons/yume.svg";
+        if (QFile::exists(diskIcon))
+            appIcon = QIcon(diskIcon);
+    }
+    if (!appIcon.isNull())
+        QApplication::setWindowIcon(appIcon);
+
+    // 2) Thème (ressource -> fallback disque)
+    bool themed = false;
+    {
+        QFile f(":/yume/style.qss");
+        if (f.open(QIODevice::ReadOnly)) {
+            app.setStyleSheet(QString::fromUtf8(f.readAll()));
+            themed = true;
+        }
+    }
+    if (!themed) {
+        const QString diskQss = QCoreApplication::applicationDirPath() + "/yume/style.qss";
+        QFile f(diskQss);
+        if (f.open(QIODevice::ReadOnly)) {
+            app.setStyleSheet(QString::fromUtf8(f.readAll()));
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -69,19 +106,13 @@ int main(int argc, char* argv[])
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 
-    // ==== Branding Yume (nom/org) avant la création de l'application ====
-    QCoreApplication::setOrganizationName("Yume");
-    QCoreApplication::setOrganizationDomain("yume.gg");
-    QCoreApplication::setApplicationName("Yume Launcher");
-    QApplication::setApplicationDisplayName("Yume Launcher");
-
     // initialize Qt
     Application app(argc, argv);
 
     switch (app.status()) {
         case Application::StartingUp:
         case Application::Initialized: {
-            // Ressources existantes de Prism
+            // Ressources Prism existantes
             Q_INIT_RESOURCE(multimc);
             Q_INIT_RESOURCE(backgrounds);
             Q_INIT_RESOURCE(documents);
@@ -100,20 +131,12 @@ int main(int argc, char* argv[])
 
             Q_INIT_RESOURCE(shaders);
 
-            // ==== Ressources Yume (thème + icônes) ====
-            // Assure-toi que launcher/resources/yume/yume.qrc est bien ajouté au build (ÉTAPE CMake juste après).
+            // Essayer d'initialiser les ressources Yume (si yume.qrc est compilé)
+            // Si ce n'est pas le cas, le fallback "fichiers à côté de l'exe" prendra le relais.
             Q_INIT_RESOURCE(yume);
 
-            // Icône de l'application (nuage)
-            QApplication::setWindowIcon(QIcon(":/yume/icons/yume.svg"));
-
-            // Thème sombre Yume (noir/violet + détails jaunes)
-            {
-                QFile f(":/yume/style.qss");
-                if (f.open(QIODevice::ReadOnly)) {
-                    app.setStyleSheet(QString::fromUtf8(f.readAll()));
-                }
-            }
+            // Branding + thème
+            applyYumeBranding(app);
 
             return app.exec();
         }
