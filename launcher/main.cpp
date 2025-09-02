@@ -35,6 +35,12 @@
 
 #include "Application.h"
 
+#include <QApplication>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QFile>
+#include <QIcon>
+
 // #define BREAK_INFINITE_LOOP
 // #define BREAK_EXCEPTION
 // #define BREAK_RETURN
@@ -63,12 +69,19 @@ int main(int argc, char* argv[])
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 
+    // ==== Branding Yume (nom/org) avant la création de l'application ====
+    QCoreApplication::setOrganizationName("Yume");
+    QCoreApplication::setOrganizationDomain("yume.gg");
+    QCoreApplication::setApplicationName("Yume Launcher");
+    QApplication::setApplicationDisplayName("Yume Launcher");
+
     // initialize Qt
     Application app(argc, argv);
 
     switch (app.status()) {
         case Application::StartingUp:
         case Application::Initialized: {
+            // Ressources existantes de Prism
             Q_INIT_RESOURCE(multimc);
             Q_INIT_RESOURCE(backgrounds);
             Q_INIT_RESOURCE(documents);
@@ -86,6 +99,22 @@ int main(int argc, char* argv[])
             Q_INIT_RESOURCE(flat_white);
 
             Q_INIT_RESOURCE(shaders);
+
+            // ==== Ressources Yume (thème + icônes) ====
+            // Assure-toi que launcher/resources/yume/yume.qrc est bien ajouté au build (ÉTAPE CMake juste après).
+            Q_INIT_RESOURCE(yume);
+
+            // Icône de l'application (nuage)
+            QApplication::setWindowIcon(QIcon(":/yume/icons/yume.svg"));
+
+            // Thème sombre Yume (noir/violet + détails jaunes)
+            {
+                QFile f(":/yume/style.qss");
+                if (f.open(QIODevice::ReadOnly)) {
+                    app.setStyleSheet(QString::fromUtf8(f.readAll()));
+                }
+            }
+
             return app.exec();
         }
         case Application::Failed:
