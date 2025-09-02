@@ -40,12 +40,12 @@ jobs:
           modules: 'qt5compat qtnetworkauth'
           cache: true
 
-      # Prépare vcpkg (pour que CMake en mode manifeste l’utilise automatiquement)
+      # vcpkg dispo pour CMake (manifeste géré par Prism)
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgTriplet: x64-windows
-          runVcpkgInstall: false   # on laisse CMake/manifeste gérer
+          runVcpkgInstall: false
 
       - name: Configure (CMake + Ninja)
         shell: cmd
@@ -56,11 +56,12 @@ jobs:
           -DCMAKE_PREFIX_PATH="%Qt6_DIR%"
           -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
 
-      # Build uniquement l'appli (nom de target selon config)
+      # Build uniquement l'appli (nom de target varie selon branches)
       - name: Build (launcher only)
         shell: cmd
         run: cmake --build build --config Release --target PrismLauncher -j 6 || cmake --build build --config Release --target prismlauncher -j 6
 
+      # Déploiement des DLL Qt
       - name: Bundle with windeployqt
         shell: pwsh
         run: |
@@ -88,7 +89,7 @@ jobs:
           Write-Host "Using windeployqt at: $qtBin"
           & $qtBin "dist\Yume\YumeLauncher.exe" --release --compiler-runtime
 
-      # 🔎 Chercher zlib1.dll partout dans le workspace (y compris build\vcpkg_installed\...)
+      # Copier zlib1.dll si présent (installé par vcpkg côté build)
       - name: Copy vcpkg runtime DLLs (zlib)
         shell: pwsh
         run: |
@@ -103,22 +104,29 @@ jobs:
             $hit = Get-ChildItem -Path $root -Recurse -Filter "zlib1.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($hit) { $found = $hit.FullName; break }
           }
-
           if ($found) {
             Copy-Item $found $target -Force
             Write-Host "Copié: $found"
           } else {
-            Write-Host "zlib1.dll introuvable, on tente de copier tout un dossier 'bin' de vcpkg_installed (fallback)…"
-            $binGuess = Get-ChildItem -Path "$env:GITHUB_WORKSPACE" -Recurse -Directory -ErrorAction SilentlyContinue |
-                        Where-Object { $_.Name -eq "bin" -and $_.FullName -like "*vcpkg_installed*x64-windows*" } |
-                        Select-Object -First 1
-            if ($binGuess) {
-              Copy-Item "$($binGuess.FullName)\*.dll" $target -Force
-              Write-Host "DLL copiées depuis: $($binGuess.FullName)"
-            } else {
-              throw "Impossible de trouver zlib1.dll (ni bin vcpkg_installed)."
-            }
+            Write-Host "Note: zlib1.dll non trouvé – probablement statiquement lié ou non requis."
           }
+
+      # ⬅️ NOUVEAU : déposer le thème & l'icône Yume à côté de l'exe (fallback disque du main.cpp)
+      - name: Copy Yume theme & icon beside EXE
+        shell: pwsh
+        run: |
+          $repo = $env:GITHUB_WORKSPACE
+          $dst  = "dist\Yume\yume\icons"
+          New-Item -ItemType Directory -Path $dst -Force | Out-Null
+
+          $srcQss = Join-Path $repo "launcher\resources\yume\style.qss"
+          $srcSvg = Join-Path $repo "launcher\resources\yume\icons\yume.svg"
+          if (!(Test-Path $srcQss)) { throw "style.qss introuvable dans le repo." }
+          if (!(Test-Path $srcSvg)) { throw "yume.svg introuvable dans le repo." }
+
+          Copy-Item $srcQss "dist\Yume\yume\style.qss" -Force
+          Copy-Item $srcSvg "dist\Yume\yume\icons\yume.svg" -Force
+          Write-Host "Thème et icône Yume copiés à côté de l'exe."
 
       - name: Package zip
         shell: cmd
