@@ -131,9 +131,8 @@ int main(int argc, char* argv[])
 
             Q_INIT_RESOURCE(shaders);
 
-            // Essayer d'initialiser les ressources Yume (si yume.qrc est compilé)
-            // Si ce n'est pas le cas, le fallback "fichiers à côté de l'exe" prendra le relais.
-            Q_INIT_RESOURCE(yume);
+            // ⚠️ Pas de Q_INIT_RESOURCE(yume) tant que yume.qrc n'est pas lié au build.
+            // Le fallback charge les fichiers copiés à côté de l'exe par GitHub Actions.
 
             // Branding + thème
             applyYumeBranding(app);
