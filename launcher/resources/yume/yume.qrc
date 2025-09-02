@@ -2,6 +2,5 @@
   <qresource prefix="/yume">
     <file>style.qss</file>
     <file>icons/yume.svg</file>
-    <file>icons/yume.ico</file>
   </qresource>
 </RCC>
