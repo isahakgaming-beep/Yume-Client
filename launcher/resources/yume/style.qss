@@ -1,0 +1,52 @@
+/* Yume — Dark / Violet / Yellow */
+* { font-family: Inter, "Segoe UI", Roboto, Ubuntu, Helvetica, Arial; }
+QWidget { background:#0b0c12; color:#e8e9f3; }
+QToolTip { background:#15182a; color:#e8e9f3; border:1px solid #2a2f4a; }
+
+/* Couleur d’accent */
+:root { /* doc */ }
+
+/* Boutons */
+QPushButton {
+  background:#15182a; color:#e8e9f3; border:1px solid #2a2f4a; border-radius:10px; padding:8px 14px;
+}
+QPushButton:hover   { background:#1b1f34; }
+QPushButton:pressed { background:#222742; }
+QPushButton:disabled{ color:#8b8fa7; border-color:#313654; }
+
+/* Bouton accent (violet) */
+QPushButton[default="true"], .accent {
+  background:#7c3aed; color:#ffffff; border-color:#7c3aed;
+}
+
+/* Badges / détails JAUNE (ex: labels d’info) */
+QLabel#badge, .badge {
+  background:#facc15; color:#0b0c12; border-radius:6px; padding:2px 8px; font-weight:600;
+}
+
+/* Entrées */
+QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, QSpinBox, QDoubleSpinBox {
+  background:#101322; color:#e8e9f3; border:1px solid #2a2f4a; border-radius:10px; padding:7px 10px;
+}
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus { border-color:#7c3aed; }
+
+/* Listes/Arbres/Tables */
+QListView, QTreeView, QTableView { background:#0f1120; border:1px solid #2a2f4a; }
+QHeaderView::section { background:#0d0f1b; color:#cfd2e6; border:0; padding:6px 8px; }
+
+/* Onglets */
+QTabBar::tab {
+  background:#0f1120; color:#cfd2e6; padding:8px 12px;
+  border-top-left-radius:10px; border-top-right-radius:10px;
+}
+QTabBar::tab:selected { background:#15182a; color:#ffffff; }
+QTabWidget::pane { border-top:2px solid #2a2f4a; margin-top:-1px; }
+
+/* Progress / sliders */
+QProgressBar { text-align:center; color:#e8e9f3; border:1px solid #2a2f4a; border-radius:8px; }
+QProgressBar::chunk { background:#7c3aed; border-radius:8px; }
+QSlider::groove:horizontal { height:6px; background:#1b1f34; border-radius:3px; }
+QSlider::handle:horizontal { width:14px; height:14px; margin:-5px 0; background:#facc15; border-radius:7px; }
+
+/* Barre d’état / barre d’outils */
+QStatusBar, QToolBar { background:#0a0b12; color:#bfc2d8; border:0; }
